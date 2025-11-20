@@ -1,72 +1,153 @@
-# simultaneous forecasting of multiple time-series variables
-Forecasting electricity demand, supply, and market price using TFT-multi and quantile regression
-## Overview
-This project focuses on **simultaneous forecasting of multiple time-series variables** in the electricity market using Temporal Fusion Transformer-multi (TFT-multi).  
-We predict **electricity demand, supply, and market price** for the Shikoku and Chugoku regions in Japan. By forecasting multiple variables together, the model can capture interdependencies among variables, improving both accuracy and consistency.
+# ⚡️ 電力需要・供給・市場価格の同時予測
+## Temporal Fusion Transformer-multi (TFT-multi) を用いたマルチ変数時系列予測
 
-## Data
-- **Target variables**: demand, supply, price (hourly data)  
-- **Dynamic covariates**: interconnection flow, pumped storage, batteries, temperature, weather, wind speed, precipitation, nuclear, thermal, hydro, geothermal, biomass, solar generation  
-- **Static covariates**: region (Shikoku/Chugoku), population, day of week, hour, month, day  
+---
 
-- Dataset: 1-year hourly data, 90% training / 10% test split  
-- Forecast horizon: 36-hour input → 12-hour output
+## 📘 概要：なぜ同時予測が必要か？
 
-## Model
-- **Temporal Fusion Transformer-multi (TFT-multi)**  
-- Multi-horizon probabilistic forecasting using quantile regression (0.1, 0.5, 0.9)  
-- Captures temporal dependencies and inter-series correlations  
-- Handles missing values via masked loss function  
+本プロジェクトでは **Temporal Fusion Transformer-multi（TFT-multi）** を用いて、日本の電力市場における **電力需要・供給・市場価格の 3 変数を同時に予測** します。
 
-- **Optimization**: Adam optimizer, learning rate 1e-3  
-- **Evaluation metric**: MAE (normalized by region)
+従来の「需要のみ」「価格のみ」といった個別予測では、**変数間の相互依存関係**（例：需給逼迫 $\rightarrow$ 価格上昇）が捉えられず、予測結果の**整合性**が崩れるという課題がありました。
 
-## Results
-- TFT-multi successfully forecasts demand, supply, and price while maintaining inter-series consistency  
+本モデルでは以下の要素を同時に学習させることで、**整合性の高いマルチタスク予測** を実現します。
 
-### MAE Results
+* **変数間の依存関係**（Supply-Demand-Price Linkage）
+* **出力間の整合性**（需給バランスと価格反応の一致）
+* **地域差の構造**（四国エリア・中国エリアの特性）
+* **時系列パターン**（気象・運用情報の時間的特徴）
 
-| Region | Variable | Mean MAE | Median MAE | n |
-|--------|----------|----------|------------|---|
-| Chugoku | Demand  | 0.012    | 0.012      | 35 |
-| Chugoku | Supply  | 0.017    | 0.015      | 35 |
-| Chugoku | Price   | 0.019    | 0.018      | 35 |
-| Shikoku | Demand  | 0.009    | 0.004      | 35 |
-| Shikoku | Supply  | 0.014    | 0.005      | 35 |
-| Shikoku | Price   | 0.019    | 0.018      | 35 |
+---
 
-## Example Visualizations
+## 📊 使用データと共変量の設計
 
-### Shikoku Region
-![Shikoku Demand](results/shikoku_demand.png)
-*Shikoku electricity demand: actual vs predicted*
+### 🔹 目的変数（Target Variables）
+* 電力需要（Demand）
+* 電力供給（Supply）
+* 市場価格（Price）
 
-![Shikoku Supply](results/shikoku_supply.png)
-*Shikoku electricity supply: actual vs predicted*
+### 🔧 共変量の設計ポイント
+TFT-multi の性能を最大化するため、**過去・未来の動的共変量** と **静的共変量** を組み合わせて設計しました。特に、気象、時間情報、地域差、発電構成を与えることで、時系列の特徴抽出を強化しています。
 
-![Shikoku Price](results/shikoku_price.png)
-*Shikoku electricity market price: actual vs predicted*
+#### 1. 動的共変量（Dynamic Covariates）
+時間とともに変動し、予測に影響を与える要素。
+* **系統情報:** 連系線潮流、揚水・蓄電池運用状況
+* **気象データ:** 気温、降水量、風速
+* **電源構成:** 火力・水力・太陽光・風力・地熱・バイオマスの各出力
+* **履歴データ:** 過去の需給実績、価格実績
 
-### Chugoku Region
-![Chugoku Demand](results/chugoku_demand.png)
-*Chugoku electricity demand: actual vs predicted*
+#### 2. 静的共変量（Static Covariates）
+時間軸で変化しない、または緩やかに変化する要素。
+* 地域ID（四国 / 中国）
+* 人口規模
+* カレンダー情報（曜日・祝日・月）
 
-![Chugoku Supply](results/chugoku_supply.png)
-*Chugoku electricity supply: actual vs predicted*
+---
 
-![Chugoku Price](results/chugoku_price.png)
-*Chugoku electricity market price: actual vs predicted*
+## 🔬 データ処理と予測設定
 
+### 📅 期間 & 分割
+* **データ:** 1 年間の **1 時間値データ**
+* **分割:** 学習 90% / テスト 10%
+* **データ拡張:** **一日ごとにウィンドウをスライド** させて学習データを増強（Data Augmentation）
 
-## How to Run
-1. Install dependencies via `requirements.txt`  
-2. Run `notebooks/train_model.ipynb` for data preprocessing and model training  
-3. Run `notebooks/predict.ipynb` for forecasting and visualization
+### 🔄 正規化手法の検討と課題
+データスケールの異なる変数を扱うため、以下の3手法を比較検討しました。
 
-## References
-1. Bryan Lim et al., Temporal Fusion Transformers for Interpretable Multi-Horizon Time Series Forecasting, 2021  
-2. He & Chiang, TFT-multi: Simultaneous Forecasting of Vital Sign Trajectories in the ICU, 2024  
-3. Shikoku Electric Power Network, https://www.yonden.co.jp  
-4. Chugoku Electric Power Network, https://www.energia.co.jp  
-5. JEPX, https://www.jepx.jp  
-6. Japan Meteorological Agency, https://www.jma.go.jp
+1. 系列全体 Min-Max 正規化
+2. 系列全体 標準化（Z-score）
+3. 地域別 標準化
+
+**検証結果：**
+**「1. 系列全体 Min-Max 正規化」**が最もトレンドの形状（山・谷）を捉えることができました。
+一方で、経済規模の小さい**四国エリア**において、中国エリアの大きなスケールに引っ張られ、予測値が**上振れ（過大評価）**する課題が確認されました。
+* ※本レポートでは Min-Max の結果を掲載していますが、後述の「地域別スケール補正」にて対策予定です。
+
+### 🔮 予測設定
+* **入力期間（Lookback）:** 過去 36 時間
+* **出力期間（Horizon）:** 未来 12 時間 （**Multi-horizon 予測**）
+
+---
+
+## 🤖 モデル構成と学習条件
+
+### **TFT-multi の採用**
+* **機能:** マルチ変数の同時予測に対応。**Variable Selection Network** による重要特徴量の自動選択、**Attention 機構** による長期依存関係の学習。
+* **堅牢性:** マスク付き損失関数を採用し、欠損値に対しても強いロバスト性を実現。
+
+### **分位点回帰（Quantile Regression）**
+* **目的:** 単一点予測だけでなく、予測の不確実性（信頼区間）を提示するため。
+* **学習:** $q = 0.1, 0.5, 0.75$ の分位点を同時学習。
+
+### **学習条件**
+* **Optimizer:** Adam ($\text{lr}=10^{-3}$)
+* **Batch size:** 64
+* **Hidden size:** 160 / **Heads:** 4
+* **Performance:** 最終 Validation Loss 約 0.05
+
+---
+
+## 📈 結果：MAEと傾向分析
+
+TFT-multi は **3 変数の相互整合性**を保ちながら安定して予測を実行しました。
+特に**「需給逼迫時に価格が反応する」**という市場原理をモデルが学習していることが、グラフの傾向分析から確認されています。
+
+### 🔹 地域別所見
+
+* **中国エリア:**
+    * 最も **安定して高精度** な予測を達成。
+    * 需要・供給・価格すべてで MAE が低く、再エネ等で変動しやすい供給曲線に対しても形状・レベルを正確に追従。
+* **四国エリア:**
+    * 全体的に **下振れ（過小推定）** 傾向が見られた。
+    * ただし、トレンド形状（ピーク・ボトムのタイミング）は実測と一致しており、スケーリングの問題（ノイズ影響）が大きいと推測される。
+
+### 📊 数値評価（Mean Absolute Error: MAE）
+
+| 地域 | 変数 | Mean MAE | Median MAE | n |
+| :--- | :--- | :--- | :--- | :--- |
+| **中国** | Demand | **0.012** | 0.012 | 35 |
+| **中国** | Supply | 0.017 | 0.015 | 35 |
+| **中国** | Price | 0.019 | 0.018 | 35 |
+| **四国** | Demand | 0.009 | 0.004 | 35 |
+| **四国** | Supply | 0.014 | 0.005 | 35 |
+| **四国** | Price | 0.019 | 0.018 | 35 |
+
+---
+
+## 🚀 今後の取り組みと展望（Future Work）
+
+### 🧪 現在進行中の取り組み（Current Initiatives）
+
+**1. 地域スケール差の補正（Region-Affine Correction）**
+正規化による地域間ギャップを埋めるため、モデル出力後に以下の補正式を適用します。
+$$
+y^{final}_r = a_r \cdot y^{model}_r + b_r
+$$
+ここで、$a_r, b_r$ は地域 $r$ ごとに学習・設定される補正係数です。
+
+**2. 解釈性の向上（Explainability）**
+ブラックボックスになりがちな深層学習モデルに対し、**Variable Selection Network** の寄与度や **Attention Weight** を可視化し、**「何が需給逼迫の予兆となったか」**を説明可能にします。
+
+**3. 整合性指標（Consistency Index）の開発**
+物理的な需給バランスと経済的な価格反応の整合性を測るため、「需要 $\approx$ 供給 + 価格弾力性」に基づく独自の評価指標を開発・導入します。
+
+**4. 既存手法との比較検証（Benchmark Comparison）**
+LightGBMやLSTMなどの単変量モデル、あるいは他の多変量モデルと比較実験を行います。「予測精度（MAE/RMSE）」だけでなく、「3変数の整合性が保たれているか」という観点でも優位性を評価します。
+
+### 🔮 長期的な展望（Roadmap）
+
+**5. 対象地域の拡大**
+現在の2エリアから、近畿・九州・北海道などへ対象を広げ、マルチリージョンモデルによる広域需給の同時予測を目指します。
+
+**6. 連系線の因果モデル化**
+四国 $\leftrightarrow$ 中国間の潮流（Interconnection Flow）が、各エリアの価格・需給に与える**双方向の因果関係**をモデル構造に組み込みます。
+
+**7. 中〜長期予測への拡張（24〜72 時間）**
+予測ホライズンを延長し、災害・逼迫時の**早期警戒アラート**や、計画停電・需給調整の意思決定支援システムへの応用を検討します。
+
+---
+
+## 📚 参考文献
+
+1. Bryan Lim, et al., *Temporal Fusion Transformers for Interpretable Multi-horizon Time Series Forecasting*, 2021.
+2. He & Chiang, *TFT-multi: Adapting Transformers for Multivariate Time Series*, 2024.
+3. データソース: 四国電力送配電, 中国電力ネットワーク, JEPX (日本卸電力取引所), 気象庁
