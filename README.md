@@ -179,4 +179,3 @@ result/中国結果/結果3.png のように捉えきれないケースに対応
 
 [1]. Bryan Lim, et al., *Temporal Fusion Transformers for Interpretable Multi-horizon Time Series Forecasting*, 2021.<br>
 [2]. He & Chiang, *TFT-multi: Adapting Transformers for Multivariate Time Series*, 2024.　　<br>
-[3]. データソース: 四国電力送配電, 中国電力ネットワーク, JEPX (日本卸電力取引所), 気象庁<br>
