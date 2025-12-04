@@ -14,6 +14,19 @@
 
 ---
 
+## 📖 学会発表実績
+本コードは、以下の学会で発表した研究内容に基づいています。
+
+> **西村瞭一and山本由和.多変量時系列データにおける複数変数の同時予測. In令和7年
+度電気関係学会四国支部連合大会講演論文集,pages17–7,92025**
+
+## 権利・利用規定
+本リポジトリに含まれる全てのソースコード、研究アイデア、およびドキュメントの著作権は、全て**著者に帰属**します。
+
+著者の書面による事前の許諾なく、以下の行為を行うことを**固く禁じます**：
+1. **複製・転載・再配布**（コードのコピペやフォークを含む）
+2. 研究内容、アルゴリズム、実装ロジックの**流用・模倣**
+
 ## 📊 使用データと共変量の設計
 
 ### 🔹 目的変数（Target Variables）
@@ -160,8 +173,12 @@ result/中国結果/結果3.png のように捉えきれないケースに対応
 そのため、現時点で GitHub に公開しているコードには含めていません。
 
 ---
-
 ## 📚 参考文献
-
 [1]. Bryan Lim, et al., *Temporal Fusion Transformers for Interpretable Multi-horizon Time Series Forecasting*, 2021.<br>
 [2]. He & Chiang, *TFT-multi: Adapting Transformers for Multivariate Time Series*, 2024.　　<br>
+
+---
+
+## 📩 連絡
+* **Email:** s250303@stu.bunri-u.ac.jp
+---
